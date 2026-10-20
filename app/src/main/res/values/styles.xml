@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="CardAthena">
+        <item name="android:background">@drawable/bg_athena_card</item>
+        <item name="android:padding">8dp</item>
+    </style>
+
+    <style name="MenuAthena">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">34dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:textColor">@color/athena_muted</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+
+    <style name="MenuAthenaSelected" parent="MenuAthena">
+        <item name="android:background">@drawable/bg_athena_selected</item>
+        <item name="android:textColor">@color/athena_blue</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="LabelAthena">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/athena_muted</item>
+        <item name="android:textSize">8sp</item>
+    </style>
+
+    <style name="TitleAthena">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/athena_text</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="AreaRowAthena">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">22dp</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+
+    <style name="AreaNameAthena">
+        <item name="android:layout_width">66dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/athena_muted</item>
+        <item name="android:textSize">8sp</item>
+    </style>
+
+    <style name="TrackAthena">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">16dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/bg_athena_track</item>
+    </style>
+
+    <style name="BarValueAthena">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:gravity">center_vertical|right</item>
+        <item name="android:paddingEnd">5dp</item>
+        <item name="android:textColor">@color/athena_text</item>
+        <item name="android:textSize">8sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="MetricAthena">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/athena_text</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+
+</resources>

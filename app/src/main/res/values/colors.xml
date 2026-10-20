@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+    <resources>
+        <color name="athena_background">#070D1B</color>
+        <color name="athena_sidebar">#0B1325</color>
+        <color name="athena_card">#151F39</color>
+        <color name="athena_border">#202B46</color>
+        <color name="athena_text">#F5F6FC</color>
+        <color name="athena_muted">#8793AE</color>
+        <color name="athena_orange">#FFAE52</color>
+        <color name="athena_purple">#6965F5</color>
+        <color name="athena_blue">#3986F5</color>
+        <color name="athena_green">#10B981</color>
+        <color name="athena_red">#EF4444</color>
+    </resources>
