@@ -1,6 +1,5 @@
 package com.example.athena
 
-
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.widget.FrameLayout
@@ -13,14 +12,12 @@ class EstadisticasActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        requestedOrientation =
-            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         setContentView(R.layout.activity_estadisticas)
 
         // Agregar la gráfica de evolución del puntaje
-        val chartContainer =
-            findViewById<FrameLayout>(R.id.chartContainer)
+        val chartContainer = findViewById<FrameLayout>(R.id.chartContainer)
 
         chartContainer.addView(
             LineChartView(this),
