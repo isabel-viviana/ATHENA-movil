@@ -1,9 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/nav_inicio" android:icon="@android:drawable/ic_menu_house" android:title="Inicio" />
-    <item android:id="@+id/nav_simulacros" android:icon="@android:drawable/ic_menu_agenda" android:title="Simulacros" />
-    <item android:id="@+id/nav_practicas" android:icon="@android:drawable/ic_menu_manage" android:title="Prácticas" />
-    <item android:id="@+id/nav_tutor" android:icon="@android:drawable/ic_menu_info_details" android:title="Tutor IA" />
-    <item android:id="@+id/nav_ranking" android:icon="@android:drawable/ic_menu_sort_by_size" android:title="Ranking" />
-    <item android:id="@+id/nav_perfil" android:icon="@android:drawable/ic_menu_myplaces" android:title="Perfil" />
+    <item
+        android:id="@+id/nav_inicio"
+        android:icon="@drawable/ic_nav_inicio"
+        android:title="Inicio" />
+    <item
+        android:id="@+id/nav_simulacros"
+        android:icon="@drawable/ic_nav_simulacros"
+        android:title="Simulacros" />
+    <item
+        android:id="@+id/nav_practicas"
+        android:icon="@drawable/ic_nav_practicas"
+        android:title="Prácticas" />
+    <item
+        android:id="@+id/nav_tutor"
+        android:icon="@drawable/ic_nav_tutor"
+        android:title="Tutor IA" />
+    <item
+        android:id="@+id/nav_ranking"
+        android:icon="@drawable/ic_nav_ranking"
+        android:title="Ranking" />
+    <item
+        android:id="@+id/nav_perfil"
+        android:icon="@drawable/ic_nav_perfil"
+        android:title="Perfil" />
 </menu>

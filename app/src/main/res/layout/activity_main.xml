@@ -1,24 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main" android:layout_width="match_parent" android:layout_height="match_parent"
-    android:background="#0B0F19" tools:context=".MainActivity">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#070D1B"
+    tools:context=".MainActivity">
 
     <!-- Contenedor donde cambiarán las pantallas (Fragments) -->
-    <FrameLayout android:id="@+id/fragment_container" android:layout_width="0dp" android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView" app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent" />
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Menú de navegación flotante (BottomNavigationView) -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView android:id="@+id/bottomNavigationView"
-        android:layout_width="0dp" android:layout_height="70dp" android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp" android:layout_marginBottom="16dp"
-        android:background="@drawable/bg_floating_bottom_nav" android:elevation="12dp"
-        app:itemIconTint="@color/bottom_nav_colors" app:itemTextColor="@color/bottom_nav_colors"
-        app:itemRippleColor="#3B82F6"
+    <!-- Menú de navegación flotante tipo Cápsula -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="0dp"
+        android:layout_height="72dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_floating_bottom_nav"
+        android:elevation="12dp"
+        app:itemIconTint="@color/bottom_nav_colors"
+        app:itemTextColor="@color/bottom_nav_colors"
+        app:itemRippleColor="#2563EB"
         app:itemActiveIndicatorStyle="@style/Widget.App.BottomNavigationView.ActiveIndicator"
-        app:labelVisibilityMode="labeled" app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent"
+        app:labelVisibilityMode="labeled"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:menu="@menu/bottom_nav_menu" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
