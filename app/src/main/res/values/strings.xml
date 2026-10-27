@@ -1,3 +1,40 @@
 <resources>
     <string name="app_name">ATHENA</string>
+    <string name="login_title">Bienvenido a ATHENA</string>
+    <string name="login_subtitle">Ingresa a tu cuenta para continuar</string>
+    <string name="email_hint">Correo electrónico</string>
+    <string name="password_hint">Contraseña</string>
+    <string name="confirm_password_hint">Confirmar contraseña</string>
+    <string name="name_hint">Nombre completo</string>
+    <string name="login_button">Iniciar sesión</string>
+    <string name="register_button">Registrarse</string>
+    <string name="forgot_password">¿Olvidaste la contraseña?</string>
+    <string name="no_account">Crear Cuenta</string>
+    <string name="have_account">¿Ya tienes cuenta? Inicia sesión</string>
+    <string name="register_title">Crear Cuenta</string>
+    <string name="register_subtitle">Únete a la plataforma de admisión 2026</string>
+    <string name="forgot_title">Recuperar Contraseña</string>
+    <string name="forgot_subtitle">Te enviaremos instrucciones a tu correo</string>
+    <string name="send_instructions">Enviar Instrucciones</string>
+    <string name="reset_title">Restablecer Contraseña</string>
+    <string name="reset_subtitle">Ingresa tu nueva contraseña</string>
+    <string name="reset_button">Cambiar Contraseña</string>
+    <string name="back_to_login">Volver al inicio de sesión</string>
+    <string name="error_empty_fields">Por favor completa todos los campos</string>
+    <string name="error_invalid_email">Correo electrónico inválido</string>
+    <string name="error_password_match">Las contraseñas no coinciden</string>
+    <string name="error_password_length">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="loading_message">Cargando...</string>
+    <string name="api_pending_notice">Nota: Conexión con backend en fase de desarrollo (mock local activo).</string>
+
+    <!-- Web Design Match Strings -->
+    <string name="login_web_subtitle">Vamos paso por paso.</string>
+    <string name="login_web_title">Ingresa a tu cuenta de estudiante ATHENA</string>
+    <string name="login_web_instruction">Ingresa tu correo o número para continuar.</string>
+    <string name="or_text">ó</string>
+    <string name="continue_google">Continuar con Google</string>
+    <string name="continue_facebook">Continuar con Facebook</string>
+    <string name="continue_apple">Continuar con Apple</string>
+    <string name="terms_privacy">Al continuar, aceptas Términos y Condiciones y Política de privacidad</string>
+    <string name="social_pending_msg">Inicio de sesión social pendiente de integración</string>
 </resources>

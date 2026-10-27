@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/athena_background"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Top Header: Subject & Timer -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/bg_card_dark"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/tvExamTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Simulacro Oficial Saber 11"
+            android:textColor="@color/athena_text_primary"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvTimer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#16233B"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="6dp"
+            android:text="04:30:00"
+            android:textColor="#F6AD55"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Progress & Question Counter -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvQuestionCounter"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Pregunta 1 de 5"
+                android:textColor="@color/athena_text_secondary"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progressBarExam"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:max="5"
+            android:progress="1"
+            android:progressTint="#3B82F6" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Question Statement Card -->
+            <TextView
+                android:id="@+id/tvQuestionText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_card_dark"
+                android:padding="16dp"
+                android:text="Cargando pregunta..."
+                android:textColor="@color/athena_text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <!-- Options Container -->
+            <RadioGroup
+                android:id="@+id/radioGroupOptions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <RadioButton
+                    android:id="@+id/rbOptionA"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:background="@drawable/bg_card_dark"
+                    android:padding="14dp"
+                    android:text="Opción A"
+                    android:textColor="@color/athena_text_primary"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rbOptionB"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:background="@drawable/bg_card_dark"
+                    android:padding="14dp"
+                    android:text="Opción B"
+                    android:textColor="@color/athena_text_primary"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rbOptionC"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:background="@drawable/bg_card_dark"
+                    android:padding="14sp"
+                    android:text="Opción C"
+                    android:textColor="@color/athena_text_primary"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/rbOptionD"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:background="@drawable/bg_card_dark"
+                    android:padding="14dp"
+                    android:text="Opción D"
+                    android:textColor="@color/athena_text_primary"
+                    android:textSize="14sp" />
+            </RadioGroup>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Bottom Navigation Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnPrev"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/athena_card_background"
+            android:text="Anterior"
+            android:textColor="@color/athena_text_primary" />
+
+        <Button
+            android:id="@+id/btnNext"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/athena_primary"
+            android:text="Siguiente"
+            android:textColor="@color/athena_text_primary" />
+    </LinearLayout>
+
+</LinearLayout>

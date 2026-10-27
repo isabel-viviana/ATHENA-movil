@@ -15,12 +15,7 @@ class MainActivity : AppCompatActivity() {
 
         bottomNavigationView = findViewById(R.id.bottomNavigationView)
 
-        // Cargar pantalla de Inicio por defecto
-        if (savedInstanceState == null) {
-            loadFragment(FragmentInicio())
-        }
-
-        // Navegación fluida entre las 6 secciones principales
+        // Navegación fluida entre las secciones principales
         bottomNavigationView.setOnItemSelectedListener { item ->
             val fragment: Fragment = when (item.itemId) {
                 R.id.nav_inicio -> FragmentInicio()
@@ -28,11 +23,24 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_practicas -> FragmentPracticas()
                 R.id.nav_tutor -> FragmentTutor()
                 R.id.nav_ranking -> FragmentRanking()
+                R.id.nav_estadisticas -> FragmentEstadisticas()
                 R.id.nav_perfil -> FragmentPerfil()
                 else -> FragmentInicio()
             }
             loadFragment(fragment)
             true
+        }
+
+        // Cargar pantalla inicial por defecto o según intent extra
+        if (savedInstanceState == null) {
+            val openTab = intent.getStringExtra("OPEN_TAB")
+            val defaultItemId = when (openTab) {
+                "tutor" -> R.id.nav_tutor
+                "practicas" -> R.id.nav_practicas
+                "estadisticas" -> R.id.nav_estadisticas
+                else -> R.id.nav_inicio
+            }
+            bottomNavigationView.selectedItemId = defaultItemId
         }
     }
 
@@ -44,13 +52,14 @@ class MainActivity : AppCompatActivity() {
             is FragmentPracticas -> R.id.nav_practicas
             is FragmentTutor -> R.id.nav_tutor
             is FragmentRanking -> R.id.nav_ranking
+            is FragmentEstadisticas -> R.id.nav_estadisticas
             is FragmentPerfil -> R.id.nav_perfil
             else -> R.id.nav_inicio
         }
         bottomNavigationView.selectedItemId = navId
     }
 
-    private fun loadFragment(fragment: Fragment) {
+    fun loadFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .commit()

@@ -13,6 +13,29 @@ class FragmentSimulacros : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_simulacros, container, false)
+        val view = inflater.inflate(R.layout.fragment_simulacros, container, false)
+
+        view.findViewById<View>(R.id.btn_iniciar_simulacro_1)?.setOnClickListener {
+            navigateToConfig("Simulacro Tipo Admisión 2026-I")
+        }
+        view.findViewById<View>(R.id.btn_iniciar_simulacro_2)?.setOnClickListener {
+            navigateToConfig("Simulacro Express: Razonamiento")
+        }
+        view.findViewById<View>(R.id.btn_iniciar_simulacro_3)?.setOnClickListener {
+            navigateToConfig("Simulacro Especial: Bloque Ciencias")
+        }
+
+        return view
+    }
+
+    private fun navigateToConfig(title: String) {
+        if (activity is MainActivity) {
+            val fragment = FragmentMockConfig().apply {
+                arguments = Bundle().apply {
+                    putString("EXAM_TITLE", title)
+                }
+            }
+            (activity as MainActivity).loadFragment(fragment)
+        }
     }
 }
