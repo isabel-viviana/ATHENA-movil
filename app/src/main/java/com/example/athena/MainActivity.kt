@@ -22,8 +22,6 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_simulacros -> FragmentSimulacros()
                 R.id.nav_practicas -> FragmentPracticas()
                 R.id.nav_tutor -> FragmentTutor()
-                R.id.nav_ranking -> FragmentRanking()
-                R.id.nav_estadisticas -> FragmentEstadisticas()
                 R.id.nav_perfil -> FragmentPerfil()
                 else -> FragmentInicio()
             }
@@ -31,32 +29,45 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        // Cargar pantalla inicial por defecto o según intent extra
+        // Cargar pantalla e inicializar el fragment por defecto al abrir la actividad
         if (savedInstanceState == null) {
             val openTab = intent.getStringExtra("OPEN_TAB")
-            val defaultItemId = when (openTab) {
-                "tutor" -> R.id.nav_tutor
-                "practicas" -> R.id.nav_practicas
-                "estadisticas" -> R.id.nav_estadisticas
-                else -> R.id.nav_inicio
+            val (defaultItemId, defaultFragment) = when (openTab) {
+                "tutor" -> Pair(R.id.nav_tutor, FragmentTutor())
+                "practicas" -> Pair(R.id.nav_practicas, FragmentPracticas())
+                "estadisticas" -> Pair(R.id.nav_perfil, FragmentEstadisticas())
+                else -> Pair(R.id.nav_inicio, FragmentInicio())
             }
-            bottomNavigationView.selectedItemId = defaultItemId
+
+            if (bottomNavigationView.selectedItemId == defaultItemId) {
+                loadFragment(defaultFragment)
+            } else {
+                bottomNavigationView.selectedItemId = defaultItemId
+            }
         }
     }
 
-    // Método público para navegar a un fragment desde otra pantalla
+    // Método público para navegar a un fragment desde otra pantalla o botón interno
     fun selectFragment(fragment: Fragment) {
         val navId = when (fragment) {
             is FragmentInicio -> R.id.nav_inicio
             is FragmentSimulacros -> R.id.nav_simulacros
             is FragmentPracticas -> R.id.nav_practicas
             is FragmentTutor -> R.id.nav_tutor
-            is FragmentRanking -> R.id.nav_ranking
-            is FragmentEstadisticas -> R.id.nav_estadisticas
             is FragmentPerfil -> R.id.nav_perfil
-            else -> R.id.nav_inicio
+            else -> null
         }
-        bottomNavigationView.selectedItemId = navId
+
+        if (navId != null) {
+            if (bottomNavigationView.selectedItemId == navId) {
+                loadFragment(fragment)
+            } else {
+                bottomNavigationView.selectedItemId = navId
+            }
+        } else {
+            // Carga directa para fragments de detalle como FragmentEstadisticas, FragmentRanking, etc.
+            loadFragment(fragment)
+        }
     }
 
     fun loadFragment(fragment: Fragment) {

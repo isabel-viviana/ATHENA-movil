@@ -17,14 +17,6 @@
         android:icon="@drawable/ic_nav_tutor"
         android:title="Tutor IA" />
     <item
-        android:id="@+id/nav_ranking"
-        android:icon="@drawable/ic_nav_ranking"
-        android:title="Ranking" />
-    <item
-        android:id="@+id/nav_estadisticas"
-        android:icon="@drawable/ic_nav_ranking"
-        android:title="Estadísticas" />
-    <item
         android:id="@+id/nav_perfil"
         android:icon="@drawable/ic_nav_perfil"
         android:title="Perfil" />
