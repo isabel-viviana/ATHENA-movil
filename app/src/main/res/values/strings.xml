@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ATHENA</string>
+    <string name="athena_mascot_description">Mascota de ATHENA</string>
 </resources>

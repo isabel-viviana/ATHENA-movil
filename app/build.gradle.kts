@@ -2,8 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
-layout.buildDirectory.set(file("C:/tmp/athena_build/app"))
-
 android {
     namespace = "com.example.athena"
     compileSdk = 37
@@ -11,7 +9,7 @@ android {
     defaultConfig {
         applicationId = "com.example.athena"
         minSdk = 24
-        targetSdk = 37
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
