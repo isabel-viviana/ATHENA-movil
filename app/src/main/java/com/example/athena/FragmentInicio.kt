@@ -19,13 +19,13 @@ class FragmentInicio : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Manejo de acciones rápidas para navegar a Simulacros o Tutor IA
+        // Manejo de acciones rápidas
         view.findViewById<View>(R.id.btn_ir_simulacro)?.setOnClickListener {
-            (activity as? MainActivity)?.selectFragment(FragmentSimulacros())
+            // Acción de simulacro
         }
 
         view.findViewById<View>(R.id.btn_ir_tutor)?.setOnClickListener {
-            (activity as? MainActivity)?.selectFragment(FragmentTutor())
+            // Acción de tutor
         }
     }
 }

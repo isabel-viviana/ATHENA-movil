@@ -2,17 +2,25 @@ package com.example.athena
 
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.BitmapFactory
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.RippleDrawable
+import android.os.CountDownTimer
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.content.Context
+import android.content.res.ColorStateList
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -21,6 +29,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -31,23 +40,26 @@ import java.util.Locale
 import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
-    private enum class Page(val title: String, val icon: String) {
-        HOME("Inicio", "⌂"),
-        EXAMS("Simulacros", "▤"),
-        PRACTICE("Prácticas", "✦"),
-        TUTOR("Tutor IA", "✧"),
-        STATISTICS("Estadísticas", "◔"),
-        RANKING("Ranking", "★"),
-        PROFILE("Perfil", "●"),
-        NOTIFICATIONS("Notificaciones", "♢"),
+    private enum class Page(val title: String, val icon: Int) {
+        HOME("Inicio", R.drawable.ic_nav_inicio),
+        EXAMS("Simulacros", R.drawable.ic_nav_simulacros),
+        PRACTICE("Prácticas", R.drawable.ic_nav_practicas),
+        TUTOR("Tutor IA", R.drawable.ic_nav_tutor),
+        STATISTICS("Estadísticas", R.drawable.ic_nav_categorias),
+        RANKING("Ranking", R.drawable.ic_nav_ranking),
+        PROFILE("Perfil", R.drawable.ic_nav_perfil),
+        NOTIFICATIONS("Notificaciones", R.drawable.ic_nav_notificaciones),
     }
 
-    private val worker = Executors.newSingleThreadExecutor()
-    private val pageBackground = Color.rgb(7, 11, 24)
-    private val cardColor = Color.rgb(21, 31, 54)
-    private val blue = Color.rgb(56, 103, 232)
+    private val worker = Executors.newFixedThreadPool(3)
+    private val pageBackground = Color.rgb(5, 10, 24)
+    private val cardColor = Color.rgb(18, 27, 47)
+    private val cardRaised = Color.rgb(21, 31, 54)
+    private val blue = Color.rgb(59, 130, 246)
+    private val blueDeep = Color.rgb(37, 83, 190)
+    private val borderColor = Color.rgb(30, 41, 59)
     private val textColor = Color.rgb(245, 247, 255)
-    private val muted = Color.rgb(167, 180, 204)
+    private val muted = Color.rgb(160, 174, 192)
     private val errorColor = Color.rgb(255, 119, 119)
     private val subjects = listOf(
         "Matemáticas",
@@ -66,6 +78,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var passwordInput: EditText
     private lateinit var loginError: TextView
     private var currentPage = Page.HOME
+    private var quizInProgress = false
     private var selectedExamType = "full"
     private var examDifficulty = "medium"
     private var practiceDifficulty = "medium"
@@ -79,6 +92,23 @@ class MainActivity : AppCompatActivity() {
     private var unreadNotifications = true
     private var profileName = "Estudiante"
     private var quizOpenedFromPractice = false
+    private var resultsReturnPage = Page.EXAMS
+    private var countdownTimer: CountDownTimer? = null
+    private var practiceTimerHandler: Handler? = null
+    private var practiceTimerRunnable: Runnable? = null
+    private var questionStartedAt = 0L
+    private var questionElapsedSeconds = 0
+    private var quizStartedAt = 0L
+    private var remainingQuizSeconds = 0L
+    private var quizTimerLabel: TextView? = null
+    private var selectedPracticeTopic: Int? = null
+    private val practiceTopics = mapOf(
+        1 to listOf(1 to "Estadística y Probabilidad", 2 to "Trigonometría Básica", 3 to "Ecuaciones Lineales"),
+        2 to listOf(4 to "Genética y Célula", 5 to "Cinemática (Física)", 6 to "Estequiometría (Química)"),
+        3 to listOf(7 to "Identificación de Tesis", 8 to "Figuras Literarias", 9 to "Análisis de Infografías"),
+        4 to listOf(10 to "Mecanismos de Participación", 11 to "La Patria Boba", 12 to "Conflictos Globales"),
+        5 to listOf(13 to "Tiempos Verbales", 14 to "Phrasal Verbs", 15 to "Reading Comprehension"),
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,6 +119,10 @@ class MainActivity : AppCompatActivity() {
         root = FrameLayout(this).apply {
             setBackgroundColor(pageBackground)
             id = View.generateViewId()
+        }
+        WindowInsetsControllerCompat(window, root).apply {
+            isAppearanceLightStatusBars = false
+            isAppearanceLightNavigationBars = false
         }
         val app = buildAppShell()
         root.addView(
@@ -115,6 +149,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        stopQuizTimer()
         worker.shutdownNow()
         super.onDestroy()
     }
@@ -124,9 +159,17 @@ class MainActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(pageBackground)
         }
-        val toolbar = label("ATHENA", 18f, textColor, true).apply {
-            setPadding(dp(20), dp(12), dp(20), dp(8))
+        val toolbar = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(20), dp(10), dp(20), dp(8))
         }
+        toolbar.addView(ImageView(this).apply {
+            setImageResource(R.drawable.athena_mascot)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            contentDescription = "ATHENA"
+        }, LinearLayout.LayoutParams(dp(32), dp(32)).apply { marginEnd = dp(8) })
+        toolbar.addView(label("ATHENA", 18f, textColor, true))
         appColumn.addView(toolbar)
 
         val scrollView = ScrollView(this).apply {
@@ -156,7 +199,8 @@ class MainActivity : AppCompatActivity() {
         val navScroll = HorizontalScrollView(this).apply {
             isHorizontalScrollBarEnabled = false
             overScrollMode = View.OVER_SCROLL_NEVER
-            setBackgroundColor(cardColor)
+            background = getDrawable(R.drawable.bg_floating_bottom_nav)
+            elevation = dp(8).toFloat()
         }
         bottomNavigation = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -169,11 +213,21 @@ class MainActivity : AppCompatActivity() {
                 gravity = Gravity.CENTER
                 isClickable = true
                 isFocusable = true
-                background = roundedDrawable(Color.TRANSPARENT, 12)
+                background = roundedRipple(Color.TRANSPARENT, 14)
                 setPadding(dp(6), dp(4), dp(6), dp(4))
             }
-            item.addView(label(page.icon, 22f, textColor, false))
-            item.addView(label(page.title, 9f, muted, false))
+            val icon = ImageView(this).apply {
+                setImageResource(page.icon)
+                imageTintList = ColorStateList.valueOf(muted)
+                contentDescription = page.title
+                scaleType = ImageView.ScaleType.FIT_CENTER
+            }
+            item.addView(icon, LinearLayout.LayoutParams(dp(22), dp(22)))
+            item.addView(label(page.title, 9f, muted, false).apply {
+                maxLines = 1
+                ellipsize = android.text.TextUtils.TruncateAt.END
+                gravity = Gravity.CENTER
+            }, topMargin(3))
             item.setOnClickListener { showPage(page) }
             bottomNavigation.addView(
                 item,
@@ -188,7 +242,11 @@ class MainActivity : AppCompatActivity() {
             LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 dp(72),
-            ),
+            ).apply {
+                marginStart = dp(10)
+                marginEnd = dp(10)
+                bottomMargin = dp(6)
+            },
         )
         return appColumn
     }
@@ -262,7 +320,7 @@ class MainActivity : AppCompatActivity() {
         }
         content.addView(loginError)
         content.addView(
-            actionButton("Iniciar sesión") {
+            actionButton("Iniciar sesión", primary = true) {
                 if (emailInput.text.isBlank() || passwordInput.text.isBlank()) {
                     loginError.text = "Completa tu correo y contraseña para continuar."
                     loginError.visibility = View.VISIBLE
@@ -286,7 +344,10 @@ class MainActivity : AppCompatActivity() {
         pageContent.removeAllViews()
         when (page) {
             Page.HOME -> renderHome()
-            Page.EXAMS -> renderExamConfiguration()
+            Page.EXAMS -> when {
+                quizInProgress -> renderQuestion()
+                else -> renderExamConfiguration()
+            }
             Page.PRACTICE -> renderPracticeConfiguration()
             Page.TUTOR -> renderTutor()
             Page.STATISTICS -> renderStatistics()
@@ -300,11 +361,17 @@ class MainActivity : AppCompatActivity() {
         for (index in 0 until bottomNavigation.childCount) {
             val item = bottomNavigation.getChildAt(index) as LinearLayout
             val selected = Page.entries[index] == currentPage
-            item.background = roundedDrawable(
-                if (selected) Color.rgb(38, 63, 117) else Color.TRANSPARENT,
-                12,
-            )
-            (item.getChildAt(1) as TextView).setTextColor(if (selected) blue else muted)
+            item.background = if (selected) {
+                getDrawable(R.drawable.bg_nav_item_active)
+            } else {
+                roundedRipple(Color.TRANSPARENT, 14)
+            }
+            (item.getChildAt(0) as ImageView).imageTintList =
+                ColorStateList.valueOf(if (selected) blue else muted)
+            (item.getChildAt(1) as TextView).apply {
+                setTextColor(if (selected) blue else muted)
+                typeface = if (selected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+            }
         }
     }
 
@@ -346,7 +413,7 @@ class MainActivity : AppCompatActivity() {
                         topMargin(6),
                     )
                     addView(
-                        actionButton("Comenzar práctica") { showPage(Page.PRACTICE) },
+                        actionButton("Comenzar práctica", primary = true) { showPage(Page.PRACTICE) },
                         topMargin(14),
                     )
                 },
@@ -400,7 +467,7 @@ class MainActivity : AppCompatActivity() {
                 addView(label("Dificultad", 14f, muted, true), topMargin(18))
                 addView(difficultySelector(false), topMargin(6))
                 addView(
-                    actionButton("Iniciar prueba") {
+                    actionButton("Iniciar prueba", primary = true) {
                         startExam(selectedExamType, examDifficulty, false)
                     },
                     topMargin(18),
@@ -437,16 +504,43 @@ class MainActivity : AppCompatActivity() {
                     if (index + 1 == practiceSubject) "Área seleccionada" else "Seleccionar área",
                 ) {
                     practiceSubject = index + 1
+                    selectedPracticeTopic = null
                     renderPracticeConfiguration()
                 },
                 topMargin(10),
+            )
+        }
+        pageContent.addView(
+            label("Tema opcional", 16f, textColor, true),
+            topMargin(16),
+        )
+        pageContent.addView(
+            choiceButton(
+                if (selectedPracticeTopic == null) "✓ Todos los temas del área" else "Todos los temas del área",
+                "Sin filtrar por tema",
+            ) {
+                selectedPracticeTopic = null
+                renderPracticeConfiguration()
+            },
+            topMargin(8),
+        )
+        practiceTopics[practiceSubject].orEmpty().forEach { (topicId, topicName) ->
+            pageContent.addView(
+                choiceButton(
+                    if (selectedPracticeTopic == topicId) "✓ $topicName" else topicName,
+                    "Practicar solo este tema",
+                ) {
+                    selectedPracticeTopic = if (selectedPracticeTopic == topicId) null else topicId
+                    renderPracticeConfiguration()
+                },
+                topMargin(8),
             )
         }
         pageContent.addView(card().apply {
             addView(label("Dificultad", 15f, textColor, true))
             addView(difficultySelector(true), topMargin(8))
             addView(
-                actionButton("Iniciar práctica de $subjectName") {
+                actionButton("Iniciar práctica de $subjectName", primary = true) {
                     startExam("practice", practiceDifficulty, true)
                 },
                 topMargin(14),
@@ -481,13 +575,29 @@ class MainActivity : AppCompatActivity() {
 
     private fun startExam(type: String, difficulty: String, practice: Boolean) {
         quizOpenedFromPractice = practice
+        selectedExamType = type
+        quizInProgress = false
         val payload = JSONObject()
             .put("exam_type", type)
             .put("difficulty", difficulty)
             .put("subject_ids", if (practice) JSONArray().put(practiceSubject) else JSONArray().put(1).put(2).put(3).put(4).put(5))
+        if (practice && selectedPracticeTopic != null) {
+            payload.put("topic_id", selectedPracticeTopic)
+        }
         pageContent.removeAllViews()
         pageContent.addView(label("Preparando tu ${if (practice) "práctica" else "simulacro"}...", 18f, textColor, true))
         request("exams/configure", "POST", payload, onSuccess = { data ->
+            val metadata = data.optJSONObject("metadata")
+            if (metadata?.optBoolean("difficulty_fallback") == true) {
+                Toast.makeText(
+                    this,
+                    metadata.optString(
+                        "difficulty_reason",
+                        "Se usarán preguntas de dificultad mixta.",
+                    ),
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
             val attempt = data.optJSONObject("attempt")
             val id = attempt?.optInt("id", 0) ?: data.optInt("attempt_id", 0)
             if (id <= 0) {
@@ -507,6 +617,8 @@ class MainActivity : AppCompatActivity() {
             if (questions.length() == 0) {
                 showError("El servidor no asignó preguntas a este intento. Intenta otro simulacro.")
             } else {
+                quizInProgress = true
+                startQuizTimer()
                 renderQuestion()
             }
         }, onError = { message -> showError(message) })
@@ -524,6 +636,8 @@ class MainActivity : AppCompatActivity() {
             question.optInt("selected_option_id").takeIf { it > 0 }
         }
         answerInFlight = false
+        questionElapsedSeconds = question.optInt("time_spent_seconds", 0)
+        questionStartedAt = SystemClock.elapsedRealtime()
         val total = questions.length()
         val subject = question.optJSONObject("subject")?.optString("name", "ICFES") ?: "ICFES"
         pageContent.addView(
@@ -542,22 +656,28 @@ class MainActivity : AppCompatActivity() {
         val stimulus = question.optJSONObject("stimulus")
         if (stimulus != null) {
             val title = stimulus.optString("title")
+            val instructions = stimulus.optString("instructions")
             val content = stimulus.optString("content_text")
-            if (title.isNotBlank() || content.isNotBlank()) {
+            if (title.isNotBlank() || instructions.isNotBlank() || content.isNotBlank()) {
                 pageContent.addView(card().apply {
                     if (title.isNotBlank()) addView(label(title, 17f, textColor, true))
+                    if (instructions.isNotBlank()) addView(label(instructions, 13f, blue, true), topMargin(6))
                     if (content.isNotBlank()) addView(label(content, 14f, muted, false), topMargin(8))
+                    addRemoteImage(this, stimulus.optString("media_url"), "Imagen del texto de apoyo")
+                    val caption = stimulus.optString("media_caption")
+                    if (caption.isNotBlank()) addView(label(caption, 12f, muted, false), topMargin(4))
                 }, topMargin(12))
             }
         }
+        val timerLabel = label("", 13f, blue, true)
+        quizTimerLabel = timerLabel
+        updateTimerLabel(timerLabel)
         pageContent.addView(
             card().apply {
+                addView(timerLabel)
                 val statement = question.optString("statement", "Pregunta sin enunciado.")
-                addView(label(statement, 17f, textColor, true))
-                val image = question.optString("question_image_url")
-                if (image.isNotBlank() && image != "null") {
-                    addView(label("Imagen de la pregunta: $image", 12f, muted, false), topMargin(8))
-                }
+                addView(label(statement, 17f, textColor, true), topMargin(8))
+                addRemoteImage(this, question.optString("question_image_url"), "Imagen de la pregunta")
             },
             topMargin(12),
         )
@@ -571,16 +691,19 @@ class MainActivity : AppCompatActivity() {
             val optionId = option.optInt("id")
             val letter = option.optString("option_letter", ('A' + index).toString())
             val optionText = option.optString("option_text", "Opción $letter")
-            pageContent.addView(
-                actionButton(
-                    "$letter. $optionText",
-                    selectedOptionId == optionId,
-                    enabled = !answerInFlight,
-                ) {
-                    saveAnswer(question.optInt("id"), optionId, false)
-                },
-                topMargin(10),
-            )
+            val optionCard = card().apply {
+                addView(
+                    actionButton(
+                        "$letter. $optionText",
+                        selectedOptionId == optionId,
+                        enabled = !answerInFlight,
+                    ) {
+                        saveAnswer(question.optInt("id"), optionId)
+                    },
+                )
+                addRemoteImage(this, option.optString("option_image_url"), "Imagen de la opción $letter")
+            }
+            pageContent.addView(optionCard, topMargin(10))
         }
         pageContent.addView(
             label("Tu respuesta se guarda en el servidor al seleccionarla.", 12f, muted, false),
@@ -593,8 +716,11 @@ class MainActivity : AppCompatActivity() {
         if (questionIndex > 0) {
             actions.addView(
                 actionButton("Anterior") {
-                    questionIndex--
-                    renderQuestion()
+                    saveAnswer(
+                        question.optInt("id"),
+                        selectedOptionId,
+                        questionIndex - 1,
+                    )
                 },
                 LinearLayout.LayoutParams(0, dp(48), 1f).apply { marginEnd = dp(6) },
             )
@@ -602,23 +728,23 @@ class MainActivity : AppCompatActivity() {
         val nextLabel = if (questionIndex == total - 1) "Finalizar simulacro" else "Siguiente"
         actions.addView(
             actionButton(nextLabel) {
-                if (selectedOptionId == null) {
-                    saveAnswer(question.optInt("id"), null, true)
-                } else {
-                    moveToNextQuestion()
-                }
+                saveAnswer(question.optInt("id"), selectedOptionId, questionIndex + 1)
             },
             LinearLayout.LayoutParams(0, dp(48), 1f).apply { marginStart = dp(6) },
         )
         pageContent.addView(actions, topMargin(18))
     }
 
-    private fun saveAnswer(questionId: Int, optionId: Int?, continueAfterSave: Boolean) {
+    private fun saveAnswer(questionId: Int, optionId: Int?, destinationIndex: Int? = null) {
         if (answerInFlight) return
         answerInFlight = true
         val payload = JSONObject()
             .put("question_id", questionId)
-            .put("time_spent_seconds", 0)
+            .put(
+                "time_spent_seconds",
+                questionElapsedSeconds +
+                    ((SystemClock.elapsedRealtime() - questionStartedAt) / 1000).toInt(),
+            )
         if (optionId != null) payload.put("selected_option_id", optionId)
         else payload.put("selected_option_id", JSONObject.NULL)
         request(
@@ -630,7 +756,19 @@ class MainActivity : AppCompatActivity() {
                 selectedOptionId = optionId
                 questions.optJSONObject(questionIndex)
                     ?.put("selected_option_id", optionId ?: JSONObject.NULL)
-                if (continueAfterSave) moveToNextQuestion() else renderQuestion()
+                    ?.put(
+                        "time_spent_seconds",
+                        questionElapsedSeconds +
+                            ((SystemClock.elapsedRealtime() - questionStartedAt) / 1000).toInt(),
+                    )
+                if (destinationIndex == null) {
+                    renderQuestion()
+                } else if (destinationIndex >= questions.length()) {
+                    finishExam()
+                } else {
+                    questionIndex = destinationIndex
+                    renderQuestion()
+                }
             },
             onError = { message ->
                 answerInFlight = false
@@ -640,23 +778,74 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun moveToNextQuestion() {
-        if (questionIndex < questions.length() - 1) {
-            questionIndex++
-            renderQuestion()
-        } else {
-            finishExam()
-        }
-    }
-
     private fun finishExam() {
+        stopQuizTimer()
         pageContent.removeAllViews()
         pageContent.addView(label("Calificando tu simulacro...", 18f, textColor, true))
         request("exams/$attemptId/finish", "POST", JSONObject(), onSuccess = {
+            quizInProgress = false
             request("exams/$attemptId/results", onSuccess = { results ->
+                resultsReturnPage = if (quizOpenedFromPractice) Page.PRACTICE else Page.EXAMS
                 renderResults(results)
             }, onError = { message -> showError("El simulacro se calificó, pero no se pudieron cargar los resultados: $message") })
         }, onError = { message -> showError(message) })
+    }
+
+    private fun startQuizTimer() {
+        stopQuizTimer()
+        quizStartedAt = SystemClock.elapsedRealtime()
+        if (quizOpenedFromPractice) {
+            val handler = Handler(Looper.getMainLooper())
+            val runnable = object : Runnable {
+                override fun run() {
+                    updateTimerLabel(quizTimerLabel)
+                    handler.postDelayed(this, 1000)
+                }
+            }
+            practiceTimerHandler = handler
+            practiceTimerRunnable = runnable
+            handler.post(runnable)
+            return
+        }
+
+        remainingQuizSeconds = if (selectedExamType == "quick") 15 * 60L else 4 * 60 * 60L + 30 * 60L
+        countdownTimer = object : CountDownTimer(remainingQuizSeconds * 1000, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                remainingQuizSeconds = millisUntilFinished / 1000
+                updateTimerLabel(quizTimerLabel)
+            }
+
+            override fun onFinish() {
+                remainingQuizSeconds = 0
+                updateTimerLabel(quizTimerLabel)
+                Toast.makeText(this@MainActivity, "Se agotó el tiempo. Finalizando la prueba.", Toast.LENGTH_LONG).show()
+                finishExam()
+            }
+        }.start()
+    }
+
+    private fun stopQuizTimer() {
+        countdownTimer?.cancel()
+        countdownTimer = null
+        practiceTimerRunnable?.let { practiceTimerHandler?.removeCallbacks(it) }
+        practiceTimerRunnable = null
+        practiceTimerHandler = null
+        quizTimerLabel = null
+    }
+
+    private fun updateTimerLabel(view: TextView?) {
+        if (view == null) return
+        if (quizOpenedFromPractice) {
+            val elapsedSeconds = ((SystemClock.elapsedRealtime() - quizStartedAt) / 1000).coerceAtLeast(0)
+            val minutes = elapsedSeconds / 60
+            val seconds = elapsedSeconds % 60
+            view.text = String.format(Locale.getDefault(), "Tiempo de práctica: %02d:%02d", minutes, seconds)
+        } else {
+            val hours = remainingQuizSeconds / 3600
+            val minutes = (remainingQuizSeconds % 3600) / 60
+            val seconds = remainingQuizSeconds % 60
+            view.text = String.format(Locale.getDefault(), "Tiempo restante: %02d:%02d:%02d", hours, minutes, seconds)
+        }
     }
 
     private fun renderResults(results: JSONObject) {
@@ -693,13 +882,102 @@ class MainActivity : AppCompatActivity() {
                 )
             }
         }
+        val details = results.optJSONArray("questions_detail") ?: JSONArray()
+        if (details.length() > 0) {
+            pageContent.addView(
+                actionButton("Revisar respuestas y explicaciones (${details.length()})") {
+                    renderReview(results)
+                },
+                topMargin(18),
+            )
+        }
         pageContent.addView(
-            actionButton(if (quizOpenedFromPractice) "Volver a prácticas" else "Volver a simulacros") {
-                showPage(if (quizOpenedFromPractice) Page.PRACTICE else Page.EXAMS)
-            },
+            actionButton(
+                when (resultsReturnPage) {
+                    Page.PRACTICE -> "Volver a prácticas"
+                    Page.STATISTICS -> "Volver a estadísticas"
+                    else -> "Volver a simulacros"
+                },
+            ) { showPage(resultsReturnPage) },
             topMargin(20),
         )
         pageContent.addView(actionButton("Ir al inicio") { showPage(Page.HOME) }, topMargin(8))
+    }
+
+    private fun renderReview(results: JSONObject) {
+        pageContent.removeAllViews()
+        pageContent.addView(label("Revisión del simulacro", 24f, textColor, true))
+        pageContent.addView(
+            label("Consulta tus respuestas y la explicación de cada pregunta.", 14f, muted, false),
+            topMargin(6),
+        )
+        val details = results.optJSONArray("questions_detail") ?: JSONArray()
+        for (index in 0 until details.length()) {
+            val item = details.optJSONObject(index) ?: continue
+            val subject = item.optString("subject_name", "Área")
+            val selected = item.optJSONObject("user_selected_option")
+            val correct = item.optJSONObject("correct_option")
+            val omitted = selected == null
+            val isCorrect = item.optBoolean("is_correct")
+            val resultLabel = when {
+                omitted -> "Omitida"
+                isCorrect -> "Correcta"
+                else -> "Incorrecta"
+            }
+            val resultColor = when {
+                omitted -> muted
+                isCorrect -> Color.rgb(72, 187, 120)
+                else -> errorColor
+            }
+            pageContent.addView(card().apply {
+                addView(label("Pregunta ${index + 1} · $subject · $resultLabel", 15f, resultColor, true))
+                addView(label(item.optString("statement", "Pregunta sin enunciado."), 15f, textColor, true), topMargin(8))
+                val stimulus = item.optJSONObject("stimulus")
+                if (stimulus != null) {
+                    val stimulusText = stimulus.optString("content_text")
+                    if (stimulusText.isNotBlank()) addView(label(stimulusText, 13f, muted, false), topMargin(8))
+                    addRemoteImage(this, stimulus.optString("media_url"), "Imagen del texto de apoyo")
+                }
+                addRemoteImage(this, item.optString("question_image_url"), "Imagen de la pregunta")
+                addView(
+                    label(
+                        "Tu respuesta: ${selected?.let { "${it.optString("option_letter")}. ${it.optString("option_text")}" } ?: "Omitida"}",
+                        13f,
+                        if (isCorrect) Color.rgb(72, 187, 120) else muted,
+                        false,
+                    ),
+                    topMargin(8),
+                )
+                if (correct != null) {
+                    addView(
+                        label(
+                            "Respuesta correcta: ${correct.optString("option_letter")}. ${correct.optString("option_text")}",
+                            13f,
+                            Color.rgb(72, 187, 120),
+                            true,
+                        ),
+                        topMargin(6),
+                    )
+                }
+                val explanation = item.optString("explanation")
+                if (explanation.isNotBlank() && explanation != "null") {
+                    addView(label("Explicación: $explanation", 13f, muted, false), topMargin(8))
+                }
+                addView(
+                    label(
+                        "Tiempo: ${item.optInt("time_spent_seconds")} s",
+                        11f,
+                        muted,
+                        false,
+                    ),
+                    topMargin(6),
+                )
+            }, topMargin(10))
+        }
+        pageContent.addView(
+            actionButton("Volver a resultados") { renderResults(results) },
+            topMargin(16),
+        )
     }
 
     private fun renderStatistics() {
@@ -742,10 +1020,31 @@ class MainActivity : AppCompatActivity() {
             } else {
                 for (index in 0 until list.length()) {
                     val attempt = list.optJSONObject(index) ?: continue
-                    pageContent.addView(card().apply {
+                    val historyCard = card().apply {
                         addView(label("${attempt.optString("tipo", "Simulacro").replaceFirstChar { it.uppercase() }} · ${attempt.optString("fecha", "")}", 15f, textColor, true))
                         addView(label("Puntaje: ${attempt.optDouble("porcentaje")}% · Correctas: ${attempt.optInt("correctas")}", 13f, muted, false), topMargin(6))
-                    }, topMargin(8))
+                        addView(label("Toca para revisar este intento.", 11f, blue, false), topMargin(6))
+                        isClickable = true
+                        isFocusable = true
+                        setOnClickListener {
+                            val id = attempt.optInt("id")
+                            if (id <= 0) {
+                                Toast.makeText(this@MainActivity, "El historial no incluye un ID válido para este intento.", Toast.LENGTH_LONG).show()
+                            } else {
+                                attemptId = id
+                                quizOpenedFromPractice = attempt.optString("tipo") == "practice"
+                                resultsReturnPage = Page.STATISTICS
+                                pageContent.removeAllViews()
+                                pageContent.addView(label("Cargando resultados...", 15f, muted, false))
+                                request("exams/$id/results", onSuccess = { results ->
+                                    renderResults(results)
+                                }, onError = { message ->
+                                    showError("No se pudieron cargar los resultados de este intento: $message")
+                                })
+                            }
+                        }
+                    }
+                    pageContent.addView(historyCard, topMargin(8))
                 }
             }
         }, onError = { message ->
@@ -785,7 +1084,7 @@ class MainActivity : AppCompatActivity() {
             setTextColor(textColor)
             setHintTextColor(muted)
             setPadding(dp(14), dp(12), dp(14), dp(12))
-            background = roundedDrawable(cardColor, 12)
+            background = roundedRipple(cardColor, 12, borderColor)
         }
         pageContent.addView(
             messageInput,
@@ -794,7 +1093,7 @@ class MainActivity : AppCompatActivity() {
             },
         )
         lateinit var send: Button
-        send = actionButton("Enviar pregunta") {
+        send = actionButton("Enviar pregunta", primary = true) {
             val text = messageInput.text.toString().trim()
             if (text.isEmpty()) {
                 messageInput.error = "Escribe una pregunta."
@@ -1024,6 +1323,105 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun addRemoteImage(container: LinearLayout, rawUrl: String, description: String) {
+            val imageUrl = rawUrl.trim()
+            if (imageUrl.isBlank() || imageUrl == "null") return
+
+            val imageView = ImageView(this).apply {
+                contentDescription = description
+                adjustViewBounds = true
+                maxHeight = dp(280)
+                scaleType = ImageView.ScaleType.FIT_CENTER
+            }
+            container.addView(
+                imageView,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                ).apply {
+                    topMargin = dp(8)
+                },
+            )
+
+            worker.execute {
+                var connection: HttpURLConnection? = null
+                try {
+                    val resolvedUrl = URL(URL(API_BASE_URL), imageUrl)
+                    if (resolvedUrl.protocol !in setOf("http", "https")) {
+                        throw IllegalArgumentException("La URL de la imagen debe usar HTTP o HTTPS.")
+                    }
+                    connection = resolvedUrl.openConnection() as HttpURLConnection
+                    connection.connectTimeout = 10000
+                    connection.readTimeout = 15000
+                    connection.setRequestProperty("Accept", "image/*")
+                    val status = connection.responseCode
+                    val contentType = connection.contentType.orEmpty()
+                    if (status !in 200..299) {
+                        throw IllegalStateException("El servidor de imágenes respondió con el código $status.")
+                    }
+                    if (!contentType.startsWith("image/")) {
+                        throw IllegalStateException("La URL no devolvió un archivo de imagen.")
+                    }
+
+                    val bytes = connection.inputStream.use { input ->
+                        val output = java.io.ByteArrayOutputStream()
+                        val buffer = ByteArray(8192)
+                        var totalBytes = 0
+                        while (true) {
+                            val read = input.read(buffer)
+                            if (read == -1) break
+                            totalBytes += read
+                            if (totalBytes > MAX_IMAGE_BYTES) {
+                                throw IllegalStateException("La imagen supera el tamaño permitido.")
+                            }
+                            output.write(buffer, 0, read)
+                        }
+                        output.toByteArray()
+                    }
+                    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+                    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+                        throw IllegalStateException("No se pudo interpretar el archivo de imagen.")
+                    }
+                    val sampleSize = calculateInSampleSize(bounds.outWidth, bounds.outHeight)
+                    val bitmap = BitmapFactory.decodeByteArray(
+                        bytes,
+                        0,
+                        bytes.size,
+                        BitmapFactory.Options().apply { inSampleSize = sampleSize },
+                    ) ?: throw IllegalStateException("No se pudo decodificar la imagen.")
+
+                    runOnUiThread {
+                        if (imageView.parent != null) {
+                            imageView.setImageBitmap(bitmap)
+                        }
+                    }
+                } catch (error: Exception) {
+                    val message = error.message ?: "No se pudo cargar la imagen."
+                    runOnUiThread {
+                        if (imageView.parent != null) {
+                            imageView.visibility = View.GONE
+                            val errorLabel = label("$description: $message", 12f, errorColor, false)
+                            val index = container.indexOfChild(imageView)
+                            container.addView(errorLabel, index, topMargin(8))
+                        }
+                    }
+                } finally {
+                    connection?.disconnect()
+                }
+            }
+        }
+
+    private fun calculateInSampleSize(width: Int, height: Int): Int {
+        var sampleSize = 1
+        while (width / sampleSize > MAX_IMAGE_DIMENSION ||
+            height / sampleSize > MAX_IMAGE_DIMENSION
+        ) {
+            sampleSize *= 2
+        }
+        return sampleSize
+    }
+
     private fun statCard(value: String, caption: String): View =
         card().apply {
             gravity = Gravity.CENTER
@@ -1046,7 +1444,14 @@ class MainActivity : AppCompatActivity() {
     private fun card(): LinearLayout =
         LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            this.background = roundedDrawable(cardColor, 16)
+            this.background = GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(cardRaised, cardColor),
+            ).apply {
+                cornerRadius = dp(16).toFloat()
+                setStroke(dp(1), borderColor)
+            }
+            elevation = dp(2).toFloat()
             setPadding(dp(16), dp(16), dp(16), dp(16))
         }
 
@@ -1058,6 +1463,7 @@ class MainActivity : AppCompatActivity() {
         title: String,
         selected: Boolean = false,
         enabled: Boolean = true,
+        primary: Boolean = false,
         onClick: () -> Unit,
     ): Button =
         Button(this).apply {
@@ -1067,8 +1473,13 @@ class MainActivity : AppCompatActivity() {
             setTextColor(textColor)
             textSize = 14f
             typeface = Typeface.DEFAULT_BOLD
-            background = roundedDrawable(if (selected) blue else cardColor, 12)
-            setPadding(dp(12), dp(8), dp(12), dp(8))
+            background = roundedRipple(
+                if (selected || primary) blue else cardColor,
+                12,
+                if (selected || primary) blueDeep else borderColor,
+            )
+            minimumHeight = dp(48)
+            setPadding(dp(16), dp(8), dp(16), dp(8))
             setOnClickListener { if (isEnabled) onClick() }
         }
 
@@ -1092,6 +1503,21 @@ class MainActivity : AppCompatActivity() {
             cornerRadius = dp(radiusDp).toFloat()
         }
 
+    private fun roundedRipple(
+        color: Int,
+        radiusDp: Int,
+        rippleColor: Int = Color.rgb(38, 99, 241),
+    ): RippleDrawable {
+        val shape = roundedDrawable(color, radiusDp).apply {
+            if (color != Color.TRANSPARENT) setStroke(dp(1), borderColor)
+        }
+        return RippleDrawable(
+            ColorStateList.valueOf(rippleColor),
+            shape,
+            roundedDrawable(Color.WHITE, radiusDp),
+        )
+    }
+
     private fun topMargin(value: Int): LinearLayout.LayoutParams =
         LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
@@ -1108,5 +1534,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val API_BASE_URL = "http://10.0.2.2:8000"
+        private const val MAX_IMAGE_BYTES = 12 * 1024 * 1024
+        private const val MAX_IMAGE_DIMENSION = 1600
     }
 }
